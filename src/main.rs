@@ -1,7 +1,7 @@
 use std::{
-    io::{stdin, stdout, Read, Write},
+    io::{stdin, stdout, Write},
     path::PathBuf,
-    process::{Command, Stdio},
+    process::Command,
 };
 
 use crossterm::{
@@ -64,26 +64,21 @@ fn run(input: String, code_path: &PathBuf, exe_path: &PathBuf, with_output: bool
     std::fs::write(code_path, formatted_file_contents).unwrap();
 
     // compile
-    let mut compile_process = Command::new("rustc")
+    let compile_process = Command::new("rustc")
         .arg(code_path)
         .arg("-o")
         .arg(exe_path)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
+        .arg("--color=always")
+        .output()
         .unwrap();
-    let mut stderr = compile_process.stderr.take().unwrap();
-    let compile_result = compile_process.wait().unwrap();
 
-    if !compile_result.success() {
+    if !compile_process.status.success() {
         if with_output {
             // retry compiling, without output
             return run(input, code_path, exe_path, false);
         }
 
-        let mut buf = Vec::new();
-        stderr.read_to_end(&mut buf).unwrap();
-        stdout().lock().write_all(&buf).unwrap();
+        stdout().lock().write_all(&compile_process.stderr).unwrap();
         false
     } else {
         // color stdout to make output pop
