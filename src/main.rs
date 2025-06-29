@@ -58,40 +58,48 @@ fn format(mut input: String, with_output: bool) -> String {
 }
 
 /// Returns success
-fn run(input: String, code_path: &PathBuf, exe_path: &PathBuf, with_output: bool) -> bool {
+fn run(
+    input: String,
+    code_path: &PathBuf,
+    exe_path: &PathBuf,
+    modified: bool,
+    with_output: bool,
+) -> bool {
     // write file
     let formatted_file_contents = format(input.clone(), with_output);
     std::fs::write(code_path, formatted_file_contents).unwrap();
 
-    // compile
-    let compile_process = Command::new("rustc")
-        .arg(code_path)
-        .arg("-o")
-        .arg(exe_path)
-        .arg("--color=always")
-        .output()
-        .unwrap();
+    // compile new code (only if code has been modified, or no exe exists)
+    if modified || !std::fs::exists(exe_path).unwrap_or(false) {
+        // compile
+        let compile_process = Command::new("rustc")
+            .arg(code_path)
+            .arg("-o")
+            .arg(exe_path)
+            .arg("--color=always")
+            .output()
+            .unwrap();
 
-    if !compile_process.status.success() {
-        if with_output {
-            // retry compiling, without output
-            return run(input, code_path, exe_path, false);
+        if !compile_process.status.success() {
+            if with_output {
+                // retry compiling, without output
+                return run(input, code_path, exe_path, modified, false);
+            }
+
+            stdout().lock().write_all(&compile_process.stderr).unwrap();
+            return false;
         }
-
-        stdout().lock().write_all(&compile_process.stderr).unwrap();
-        false
-    } else {
-        // color stdout to make output pop
-        execute!(stdout(), SetForegroundColor(crossterm::style::Color::Blue)).unwrap();
-
-        // run
-        Command::new(exe_path)
-            .spawn()
-            .unwrap()
-            .wait()
-            .unwrap()
-            .success()
     }
+    // color stdout to make output pop
+    execute!(stdout(), SetForegroundColor(crossterm::style::Color::Blue)).unwrap();
+
+    // run
+    Command::new(exe_path)
+        .spawn()
+        .unwrap()
+        .wait()
+        .unwrap()
+        .success()
 }
 
 const HELP: &str = "/help - prints help
@@ -149,7 +157,13 @@ fn main() {
             }
             modified_file_contents += buf;
 
-            let success = run(modified_file_contents.clone(), &code_path, &exe_path, true);
+            let success = run(
+                modified_file_contents.clone(),
+                &code_path,
+                &exe_path,
+                !buf.is_empty(),
+                true,
+            );
             queue!(stdout, ResetColor).unwrap();
 
             if success {
