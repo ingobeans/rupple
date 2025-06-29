@@ -1,5 +1,5 @@
 use std::{
-    io::{Read, Write, stdin, stdout},
+    io::{stdin, stdout, Read, Write},
     path::PathBuf,
     process::{Command, Stdio},
 };
@@ -106,7 +106,10 @@ const HELP: &str = "/help - prints help
 
 fn main() {
     let temp_dir = tempdir::TempDir::new("rupple").expect("couldn't create temp dir");
+
     let code_path = temp_dir.path().join("main.rs");
+    // we use .exe for all OSes, since for windows it is required, and for linux file extension doesn't matter
+    // so its fine
     let exe_path = temp_dir.path().join("main.exe");
 
     let mut stdout = stdout();
