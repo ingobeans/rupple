@@ -8,3 +8,5 @@ rupple features:
 * roughly 5x faster than evcxr on my machine
 * no nightly required
 * 2 deps only
+
+install: `cargo install --git https://github.com/ingobeans/rupple.git`
