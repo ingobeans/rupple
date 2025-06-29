@@ -112,14 +112,14 @@ fn main() {
     println!("[rupple {}]", env!("CARGO_PKG_VERSION"));
     queue!(stdout, SetForegroundColor(crossterm::style::Color::Grey)).unwrap();
     println!("do /help for list of commands, or just start typing code!");
-    queue!(stdout, ResetColor).unwrap();
 
     let mut current_file_contents = String::new();
 
     loop {
         let mut modified_file_contents = current_file_contents.clone();
+        queue!(stdout, SetForegroundColor(crossterm::style::Color::Green)).unwrap();
         print!("> ");
-        stdout.flush().unwrap();
+        execute!(stdout, ResetColor).unwrap();
 
         let mut buf = String::new();
         stdin().read_line(&mut buf).unwrap();
