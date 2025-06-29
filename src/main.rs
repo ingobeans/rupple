@@ -4,6 +4,11 @@ use std::{
     process::{Command, Stdio},
 };
 
+use crossterm::{
+    execute, queue,
+    style::{ResetColor, SetForegroundColor},
+};
+
 const BASE_CONTENTS: &str = "
 use std::fmt::Debug;
 fn rupple() -> Option<Box<dyn Debug>> {
@@ -81,6 +86,9 @@ fn run(input: String, code_path: &PathBuf, exe_path: &PathBuf, with_output: bool
         stdout().lock().write_all(&buf).unwrap();
         false
     } else {
+        // color stdout to make output pop
+        execute!(stdout(), SetForegroundColor(crossterm::style::Color::Blue)).unwrap();
+
         // run
         Command::new(exe_path)
             .spawn()
@@ -91,31 +99,61 @@ fn run(input: String, code_path: &PathBuf, exe_path: &PathBuf, with_output: bool
     }
 }
 
+const HELP: &str = "/help - prints help
+/clear - clears repl
+/exit - quits repl
+/debug - prints stored repl data";
+
 fn main() {
     let temp_dir = tempdir::TempDir::new("rupple").expect("couldn't create temp dir");
     let code_path = temp_dir.path().join("main.rs");
     let exe_path = temp_dir.path().join("main.exe");
+
+    let mut stdout = stdout();
+    queue!(stdout, SetForegroundColor(crossterm::style::Color::Green)).unwrap();
+    println!("[rupple {}]", env!("CARGO_PKG_VERSION"));
+    queue!(stdout, SetForegroundColor(crossterm::style::Color::Grey)).unwrap();
+    println!("do /help for list of commands, or just start typing code!");
+    queue!(stdout, ResetColor).unwrap();
 
     let mut current_file_contents = String::new();
 
     loop {
         let mut modified_file_contents = current_file_contents.clone();
         print!("> ");
-        stdout().flush().unwrap();
+        stdout.flush().unwrap();
 
         let mut buf = String::new();
         stdin().read_line(&mut buf).unwrap();
         let buf = buf.trim();
 
-        if buf == "!clear" {
-            current_file_contents = String::new();
+        if buf.starts_with("/") {
+            match buf {
+                "/help" => {
+                    println!("{HELP}")
+                }
+                "/clear" | "/reset" => {
+                    current_file_contents = String::new();
+                }
+                "/exit" => {
+                    return;
+                }
+                "/debug" => {
+                    println!("{}", current_file_contents);
+                }
+                _ => {
+                    println!("unknown command, do /help for list")
+                }
+            }
         } else {
-            if !modified_file_contents.ends_with(";") {
+            if !modified_file_contents.is_empty() && !modified_file_contents.ends_with(";") {
                 modified_file_contents += ";";
             }
             modified_file_contents += buf;
 
             let success = run(modified_file_contents.clone(), &code_path, &exe_path, true);
+            queue!(stdout, ResetColor).unwrap();
+
             if success {
                 // only save changes if it compiled successfully
                 current_file_contents = modified_file_contents;
