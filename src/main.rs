@@ -6,32 +6,56 @@ use std::{
 
 const BASE_CONTENTS: &str = "
 use std::fmt::Debug;
-fn rupple() -> Box<dyn Debug> {
+fn rupple() -> Option<Box<dyn Debug>> {
     // user input
 }
 
 fn main() {
     let result = rupple();
-    println!(\"{:?}\", result);
+    if let Some(result) = result {
+        println!(\"{:?}\", result);
+    }
 }
 ";
 
-fn format(mut input: String) -> String {
-    if !input.ends_with(";") {
-        let mut lines: Vec<String> = input.split(";").map(|f| f.to_string()).collect();
-        let last = lines.last_mut().unwrap();
-        *last = format!("Box::new({})", last);
-        input = lines.join(";");
+const BASE_CONTENTS_NO_OUTPUT: &str = "
+fn rupple() {
+    // user input
+}
+
+fn main() {
+    rupple();
+}";
+
+fn format(mut input: String, with_output: bool) -> String {
+    let base = if with_output {
+        BASE_CONTENTS
     } else {
-        input += "Box::new(\"no output\")";
+        BASE_CONTENTS_NO_OUTPUT
+    };
+
+    if with_output {
+        if !input.ends_with(";") {
+            let mut lines: Vec<String> = input.split(";").map(|f| f.to_string()).collect();
+            let last = lines.last_mut().unwrap();
+            *last = format!("Some(Box::new({}))", last);
+            input = lines.join(";");
+        } else {
+            input += "None";
+        }
+    } else {
+        if !input.ends_with(";") {
+            input += ";";
+        }
     }
-    BASE_CONTENTS.replace("// user input", &input)
+
+    base.replace("// user input", &input)
 }
 
 /// Returns success
-fn run(input: String, code_path: &PathBuf, exe_path: &PathBuf) -> bool {
+fn run(input: String, code_path: &PathBuf, exe_path: &PathBuf, with_output: bool) -> bool {
     // write file
-    let formatted_file_contents = format(input);
+    let formatted_file_contents = format(input.clone(), with_output);
     std::fs::write(code_path, formatted_file_contents).unwrap();
 
     // compile
@@ -47,6 +71,11 @@ fn run(input: String, code_path: &PathBuf, exe_path: &PathBuf) -> bool {
     let compile_result = compile_process.wait().unwrap();
 
     if !compile_result.success() {
+        if with_output {
+            // retry compiling, without output
+            return run(input, code_path, exe_path, false);
+        }
+
         let mut buf = Vec::new();
         stderr.read_to_end(&mut buf).unwrap();
         stdout().lock().write_all(&buf).unwrap();
@@ -76,16 +105,21 @@ fn main() {
 
         let mut buf = String::new();
         stdin().read_line(&mut buf).unwrap();
+        let buf = buf.trim();
 
-        if !modified_file_contents.ends_with(";") {
-            modified_file_contents += ";";
-        }
-        modified_file_contents += buf.trim();
+        if buf == "!clear" {
+            current_file_contents = String::new();
+        } else {
+            if !modified_file_contents.ends_with(";") {
+                modified_file_contents += ";";
+            }
+            modified_file_contents += buf;
 
-        let success = run(modified_file_contents.clone(), &code_path, &exe_path);
-        if success {
-            // only save changes if it compiled successfully
-            current_file_contents = modified_file_contents;
+            let success = run(modified_file_contents.clone(), &code_path, &exe_path, true);
+            if success {
+                // only save changes if it compiled successfully
+                current_file_contents = modified_file_contents;
+            }
         }
     }
 }
