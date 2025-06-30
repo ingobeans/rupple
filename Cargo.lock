@@ -226,7 +226,7 @@ dependencies = [
 
 [[package]]
 name = "rupple"
-version = "0.1.9"
+version = "0.1.10"
 dependencies = [
  "crossterm",
  "ctrlc",
