@@ -8,6 +8,7 @@ use crossterm::{
     execute, queue,
     style::{ResetColor, SetForegroundColor},
 };
+use rand::{rng, Rng};
 
 const BASE_CONTENTS: &str = "
 use std::fmt::Debug;
@@ -48,10 +49,8 @@ fn format(mut input: String, with_output: bool) -> String {
         } else {
             input += "None";
         }
-    } else {
-        if !input.ends_with(";") {
-            input += ";";
-        }
+    } else if !input.ends_with(";") {
+        input += ";";
     }
 
     base.replace("// user input", &input)
@@ -107,13 +106,24 @@ const HELP: &str = "/help - prints help
 /exit - quits repl
 /debug - prints stored repl data";
 
-fn main() {
-    let temp_dir = tempdir::TempDir::new("rupple").expect("couldn't create temp dir");
+fn generate_rupple_id() -> String {
+    let mut id = String::from("rupple-");
+    let mut rng = rng();
 
-    let code_path = temp_dir.path().join("main.rs");
+    for _ in 0..5 {
+        id += &(rng.random_range(97_u8..122_u8) as char).to_string()
+    }
+    id
+}
+
+fn main() {
+    let temp_dir = std::env::temp_dir().join(generate_rupple_id());
+    std::fs::create_dir(&temp_dir).expect("couldn't create temp dir :<");
+
+    let code_path = temp_dir.join("main.rs");
     // we use .exe for all OSes, since for windows it is required, and for linux file extension doesn't matter
     // so its fine
-    let exe_path = temp_dir.path().join("main.exe");
+    let exe_path = temp_dir.join("main.exe");
 
     let mut stdout = stdout();
     queue!(stdout, SetForegroundColor(crossterm::style::Color::Green)).unwrap();
@@ -126,6 +136,12 @@ fn main() {
     println!("do /help for list of commands, or just start typing code!");
 
     let mut current_file_contents = String::new();
+
+    ctrlc::set_handler(move || {
+        std::fs::remove_dir_all(&temp_dir).unwrap();
+        std::process::exit(0);
+    })
+    .unwrap();
 
     loop {
         let mut modified_file_contents = current_file_contents.clone();

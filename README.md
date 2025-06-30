@@ -7,7 +7,6 @@ rupple features:
 * run rust code in repl environment with output
 * roughly 5x faster than evcxr on my machine
 * no nightly required
-* 2 deps only
 * crossplatform
 
 install: `cargo install --git https://github.com/ingobeans/rupple.git`

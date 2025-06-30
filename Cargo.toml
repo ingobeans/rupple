@@ -7,4 +7,5 @@ edition = "2021"
 crossterm = { version = "0.29.0", default-features = false, features = [
     "windows",
 ] }
-tempdir = "0.3.7"
+ctrlc = "3.4.7"
+rand = "0.9.1"
