@@ -118,7 +118,7 @@ fn main() {
     let mut stdout = stdout();
     queue!(stdout, SetForegroundColor(crossterm::style::Color::Green)).unwrap();
     println!("[rupple {}]", env!("CARGO_PKG_VERSION"));
-    queue!(stdout, SetForegroundColor(crossterm::style::Color::Grey)).unwrap();
+    queue!(stdout, SetForegroundColor(crossterm::style::Color::DarkGrey)).unwrap();
     println!("do /help for list of commands, or just start typing code!");
 
     let mut current_file_contents = String::new();
