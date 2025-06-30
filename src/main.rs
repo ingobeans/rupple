@@ -19,7 +19,8 @@ fn rupple() -> Option<Box<dyn Debug>> {
 fn main() {
     let result = rupple();
     if let Some(result) = result {
-        println!(\"{:?}\", result);
+        // print result (with blue color ANSI escape code prefixed)
+        println!(\"\x1B[34m{:?}\", result);
     }
 }
 ";
@@ -95,8 +96,6 @@ fn run(
             return false;
         }
     }
-    // color stdout to make output pop
-    execute!(stdout(), SetForegroundColor(crossterm::style::Color::Blue)).unwrap();
 
     // run
     Command::new(exe_path)
