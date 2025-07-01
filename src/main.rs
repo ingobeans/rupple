@@ -163,10 +163,10 @@ fn main() {
 
     let mut current_file_contents = String::new();
     let mut buf = String::new();
+    queue!(stdout, SetForegroundColor(crossterm::style::Color::Green)).unwrap();
+    print!("> ");
     loop {
         let mut modified_file_contents = current_file_contents.clone();
-        queue!(stdout, SetForegroundColor(crossterm::style::Color::Green)).unwrap();
-        print!("> ");
         execute!(stdout, ResetColor).unwrap();
 
         stdin().read_line(&mut buf).unwrap();
@@ -174,6 +174,7 @@ fn main() {
 
         if line_input.ends_with("\\") {
             buf.remove(string_index_of_char_reverse(&buf, "\\").unwrap());
+            print!("  ");
             continue;
         }
 
@@ -221,5 +222,7 @@ fn main() {
         }
 
         buf = String::new();
+        queue!(stdout, SetForegroundColor(crossterm::style::Color::Green)).unwrap();
+        print!("> ");
     }
 }
