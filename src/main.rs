@@ -185,7 +185,9 @@ fn main() {
                 }
                 "/clear" | "/reset" => {
                     current_file_contents = String::new();
-                    std::fs::remove_file(&exe_path).unwrap();
+                    if std::fs::exists(&exe_path).unwrap_or(false) {
+                        std::fs::remove_file(&exe_path).unwrap();
+                    }
                 }
                 "/exit" | "/quit" => {
                     return;
