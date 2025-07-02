@@ -31,6 +31,15 @@ const HELP: &str = "/help - prints help
 /exit - quits repl
 /debug - prints stored repl data";
 
+/// Whether a user's input is incomplete or not.
+/// For instance, true if the user opens a closure that isn't closed,
+/// or declares a string without terminating quote.
+fn is_input_incomplete(input: &str) -> bool {
+    // Parsing only fails if something was unterminated
+    !input.parse::<proc_macro2::TokenStream>().is_ok()
+}
+
+/// Returns the leading whitespace of a str
 fn get_leading_whitespace(text: &str) -> String {
     let mut buf = String::new();
     for char in text.chars() {
@@ -119,20 +128,6 @@ fn generate_rupple_id() -> String {
     id
 }
 
-/// Finds first occurence of a character, right to left, and returns index of byte
-fn string_index_of_char_reverse(text: &str, target: &str) -> Option<usize> {
-    let text_len = text.len();
-    for inverted_index in 0..text_len {
-        let index = text_len - inverted_index - 1;
-        let char = &text[index..index + 1];
-
-        if char == target {
-            return Some(text_len - inverted_index - 1);
-        }
-    }
-    None
-}
-
 fn main() {
     let temp_dir = std::env::temp_dir().join(generate_rupple_id());
     std::fs::create_dir(&temp_dir).expect("couldn't create temp dir :<");
@@ -172,8 +167,7 @@ fn main() {
         stdin().read_line(&mut buf).unwrap();
         let line_input = buf.trim();
 
-        if line_input.ends_with("\\") {
-            buf.remove(string_index_of_char_reverse(&buf, "\\").unwrap());
+        if is_input_incomplete(&buf) {
             print!("  ");
             continue;
         }

@@ -226,10 +226,11 @@ dependencies = [
 
 [[package]]
 name = "rupple"
-version = "0.1.17"
+version = "0.1.18"
 dependencies = [
  "crossterm",
  "ctrlc",
+ "proc-macro2",
  "rand",
 ]
 
