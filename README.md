@@ -8,5 +8,6 @@ rupple features:
 * roughly 5x faster than evcxr on my machine
 * no nightly required
 * crossplatform
+* figures out when input is incomplete, i.e. when you open a closure without closing it, so you can submit more lines
 
 install: `cargo install --git https://github.com/ingobeans/rupple.git`
