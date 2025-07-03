@@ -172,7 +172,7 @@ fn main() {
             continue;
         }
 
-        if line_input.starts_with("/") {
+        if line_input.starts_with("/") && !line_input.starts_with("//") {
             match line_input {
                 "/help" => {
                     println!("{HELP}")
