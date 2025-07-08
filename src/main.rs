@@ -23,20 +23,7 @@ const HELP: &str = "/help - prints help
 /// or declares a string without terminating quote.
 fn is_input_incomplete(input: &str) -> bool {
     // Parsing only fails if something was unterminated
-    !input.parse::<proc_macro2::TokenStream>().is_ok()
-}
-
-/// Returns the leading whitespace of a str
-fn get_leading_whitespace(text: &str) -> String {
-    let mut buf = String::new();
-    for char in text.chars() {
-        if char.is_whitespace() {
-            buf.push(char);
-        } else {
-            break;
-        }
-    }
-    buf
+    input.parse::<proc_macro2::TokenStream>().is_err()
 }
 
 /// Function that checks for the specific case where input ends with a let declaration without a terminating semicolon
@@ -81,7 +68,6 @@ fn format(mut input: String) -> String {
             "let output = {{\n{}\n}}; FalliblePrinter(output).print();",
             input
         )
-    } else {
     }
 
     BASE_CONTENTS.replace("// user input", &input)
