@@ -39,15 +39,24 @@ fn get_leading_whitespace(text: &str) -> String {
     buf
 }
 
-/// Function that checks for the specific case where input ends with a let declaration without a semicolon
+/// Function that checks for the specific case where input ends with a let declaration without a terminating semicolon
 fn requires_extra_semicolon(mut tokens: Vec<TokenTree>) -> bool {
+    // if theres at least 3 tokens
     if tokens.len() >= 3 {
+        // and the ultimate token is a literal
         if let TokenTree::Literal(_) = tokens.pop().unwrap() {
+            // and the penultimate token is a punctuation character
             if let TokenTree::Punct(char) = tokens.pop().unwrap() {
+                // and the penultimate token is an equals sign
                 if char.as_char() == '=' {
+                    // and the antepenultimate token is an identifier
                     if let TokenTree::Ident(_) = tokens.pop().unwrap() {
+                        // and the preantepenultimate token is an identifier
                         if let TokenTree::Ident(sym) = tokens.pop().unwrap() {
+                            // and the preantepenultimate token's text == "let"
                             if sym.to_string().trim() == "let" {
+                                // then that means we are looking at a let declaration without a terminating semicolon
+                                // OH NO!!
                                 return true;
                             }
                         }
@@ -56,6 +65,7 @@ fn requires_extra_semicolon(mut tokens: Vec<TokenTree>) -> bool {
             }
         }
     }
+    // or if any of those conditions fail, we're all good
     false
 }
 
