@@ -8,6 +8,7 @@ use crossterm::{
     execute, queue,
     style::{ResetColor, SetForegroundColor},
 };
+use proc_macro2::{TokenStream, TokenTree};
 use rand::{rng, Rng};
 
 const BASE_CONTENTS: &str = include_str!("base.rs");
@@ -38,8 +39,36 @@ fn get_leading_whitespace(text: &str) -> String {
     buf
 }
 
+/// Function that checks for the specific case where input ends with a let declaration without a semicolon
+fn requires_extra_semicolon(mut tokens: Vec<TokenTree>) -> bool {
+    if tokens.len() < 3 {
+        false
+    } else {
+        if let TokenTree::Literal(_) = tokens.pop().unwrap() {
+            if let TokenTree::Punct(char) = tokens.pop().unwrap() {
+                if char.as_char() == '=' {
+                    if let TokenTree::Ident(_) = tokens.pop().unwrap() {
+                        if let TokenTree::Ident(sym) = tokens.pop().unwrap() {
+                            if sym.to_string().trim() == "let" {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        false
+    }
+}
+
 /// Formats input code with boilerplate base contents
 fn format(mut input: String) -> String {
+    let tokens = input.parse::<TokenStream>().unwrap().into_iter().collect();
+    if requires_extra_semicolon(tokens) {
+        input += ";"
+    }
+
     if !input.trim().ends_with(";") {
         let mut lines: Vec<String> = input.split(";").map(|f| f.to_string()).collect();
         let last = lines.last_mut().unwrap();
@@ -56,18 +85,9 @@ fn format(mut input: String) -> String {
 }
 
 /// Returns success
-fn run(
-    mut input: String,
-    code_path: &PathBuf,
-    exe_path: &PathBuf,
-    modified: bool,
-    with_output: bool,
-) -> bool {
-    if !with_output {
-        input += ";"
-    }
+fn run(input: String, code_path: &PathBuf, exe_path: &PathBuf, modified: bool) -> bool {
     // write file
-    let formatted_file_contents = format(input.clone());
+    let formatted_file_contents = format(input);
     std::fs::write(code_path, formatted_file_contents).unwrap();
 
     // compile new code (only if code has been modified, or no exe exists)
@@ -82,11 +102,6 @@ fn run(
             .unwrap();
 
         if !compile_process.status.success() {
-            if with_output {
-                // retry compiling, without output
-                return run(input, code_path, exe_path, modified, false);
-            }
-
             stdout().lock().write_all(&compile_process.stderr).unwrap();
             return false;
         }
@@ -192,7 +207,6 @@ fn main() {
                 &code_path,
                 &exe_path,
                 !line_input.is_empty(),
-                true,
             );
             queue!(stdout, ResetColor).unwrap();
 
