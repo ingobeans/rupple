@@ -77,14 +77,10 @@ fn format(mut input: String) -> String {
     }
 
     if !input.trim().ends_with(";") {
-        let mut lines: Vec<String> = input.split(";").map(|f| f.to_string()).collect();
-        let last = lines.last_mut().unwrap();
-        *last = format!(
-            "{}FalliblePrinter({}).print();",
-            get_leading_whitespace(last),
-            last.trim()
-        );
-        input = lines.join(";");
+        input = format!(
+            "let output = {{\n{}\n}}; FalliblePrinter(output).print();",
+            input
+        )
     } else {
     }
 
