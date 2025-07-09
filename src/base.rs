@@ -3,9 +3,24 @@
 use std::fmt::Debug;
 
 /// Struct that can attempt to print an inner value with debug
-/// If the inner value doesn't implement debug, nothing is printed instead
+/// If the inner value doesn't implement debug, nothing is printed instead.
+///
+/// Note: uses some weird compile time shenanigans, specifically how,
+///  ```rust
+/// impl A {
+///     fn c() {}
+/// }
+/// ```
+/// takes precedence over:
+/// ```rust
+/// impl B for A {
+///     fn c() {}
+/// }
+/// ```
+/// So by locking the first kind of impl behind a trait requirement, the second kind of impl can be used as a default, should the first fail
 struct FalliblePrinter<T>(T);
 
+/// Called on FalliablePrinter<T>.print() if T implements Debug
 impl<T: Debug> FalliblePrinter<T> {
     fn print(&self) {
         println!("\x1B[34m{:?}", self.0)
@@ -14,13 +29,37 @@ impl<T: Debug> FalliblePrinter<T> {
 trait NoDebug {
     fn print(&self);
 }
+/// Called on FalliablePrinter<T>.print() if T does not implement Debug
 impl<T> NoDebug for FalliblePrinter<T> {
     fn print(&self) {}
+}
+
+/// Marker trait for null type
+trait Null {}
+impl Null for () {}
+
+/// Called on FalliablePrinter<T>.print() if T implements the Null marker trait
+impl<T: Null> FalliblePrinter<T> {
+    fn is_null(&self) -> bool {
+        true
+    }
+}
+trait NoNull {
+    fn is_null(&self) -> bool;
+}
+/// Called on FalliablePrinter<T>.print() if T does not implement the Null marker trait
+impl<T> NoNull for FalliblePrinter<T> {
+    fn is_null(&self) -> bool {
+        false
+    }
 }
 
 fn main() {
     let output = {
         // user input
     };
-    FalliblePrinter(output).print();
+    let printer = FalliblePrinter(output);
+    if !printer.is_null() {
+        FalliblePrinter(output).print();
+    }
 }
