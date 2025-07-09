@@ -28,7 +28,7 @@ fn is_input_incomplete(input: &str) -> bool {
     // although it does also have a few edge cases where it also fails,
     // such as randomly typing a closing bracket, or typing a char literal, but with multiple chars, like: `let a = 'abc';`
     // but for now i'll leave this as is, because it does work, and false positives are rare, and always the user's fault in some way
-    input.parse::<proc_macro2::TokenStream>().is_err()
+    input.parse::<TokenStream>().is_err()
 }
 
 /// Function that checks for the specific case where input ends with a let declaration without a terminating semicolon
