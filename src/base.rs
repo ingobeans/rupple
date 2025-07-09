@@ -19,5 +19,8 @@ impl<T> NoDebug for FalliblePrinter<T> {
 }
 
 fn main() {
-    // user input
+    let output = {
+        // user input
+    };
+    FalliblePrinter(output).print();
 }

@@ -68,13 +68,6 @@ fn format(mut input: String) -> String {
         input += ";"
     }
 
-    if !input.trim().ends_with(";") {
-        input = format!(
-            "let output = {{\n{}\n}}; FalliblePrinter(output).print();",
-            input
-        )
-    }
-
     BASE_CONTENTS.replace("// user input", &input)
 }
 
