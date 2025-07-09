@@ -38,7 +38,7 @@ impl<T> NoDebug for FalliblePrinter<T> {
 trait Null {}
 impl Null for () {}
 
-/// Called on FalliablePrinter<T>.print() if T implements the Null marker trait
+/// Called on FalliablePrinter<T>.is_null() if T implements the Null marker trait
 impl<T: Null> FalliblePrinter<T> {
     fn is_null(&self) -> bool {
         true
@@ -47,7 +47,7 @@ impl<T: Null> FalliblePrinter<T> {
 trait NoNull {
     fn is_null(&self) -> bool;
 }
-/// Called on FalliablePrinter<T>.print() if T does not implement the Null marker trait
+/// Called on FalliablePrinter<T>.is_null() if T does not implement the Null marker trait
 impl<T> NoNull for FalliblePrinter<T> {
     fn is_null(&self) -> bool {
         false
