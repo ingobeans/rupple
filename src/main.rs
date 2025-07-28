@@ -92,8 +92,9 @@ fn main() {
     println!("do /help for list of commands, or just start typing code!");
 
     // make ctrl+c clean up temp dir
+    let handler_temp_dir = temp_dir.clone();
     ctrlc::set_handler(move || {
-        std::fs::remove_dir_all(&temp_dir).unwrap();
+        std::fs::remove_dir_all(&handler_temp_dir).unwrap();
         std::process::exit(0);
     })
     .unwrap();
@@ -128,6 +129,7 @@ fn main() {
                     }
                 }
                 "/exit" | "/quit" => {
+                    std::fs::remove_dir_all(&temp_dir).unwrap();
                     return;
                 }
                 "/debug" => {
