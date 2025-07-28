@@ -8,12 +8,11 @@ use crossterm::{
     execute, queue,
     style::{ResetColor, SetForegroundColor},
 };
-use proc_macro2::{TokenStream, TokenTree};
 use rand::{rng, Rng};
 
-use crate::is_incomplete::is_input_incomplete;
+use crate::parser::{parse_input, ParseResult};
 
-mod is_incomplete;
+mod parser;
 
 const BASE_CONTENTS: &str = include_str!("base.rs");
 
@@ -22,50 +21,15 @@ const HELP: &str = "/help - prints help
 /exit - quits repl
 /debug - prints stored repl data";
 
-/// Function that checks for the specific case where input ends with a let declaration without a terminating semicolon
-fn requires_extra_semicolon(mut tokens: Vec<TokenTree>) -> bool {
-    // if theres at least 3 tokens
-    if tokens.len() >= 3 {
-        // and the ultimate token is a literal
-        if let TokenTree::Literal(_) = tokens.pop().unwrap() {
-            // and the penultimate token is a punctuation character
-            if let TokenTree::Punct(char) = tokens.pop().unwrap() {
-                // and the penultimate token is an equals sign
-                if char.as_char() == '=' {
-                    // and the antepenultimate token is an identifier
-                    if let TokenTree::Ident(_) = tokens.pop().unwrap() {
-                        // and the preantepenultimate token is an identifier
-                        if let TokenTree::Ident(sym) = tokens.pop().unwrap() {
-                            // and the preantepenultimate token's text == "let"
-                            if sym.to_string().trim() == "let" {
-                                // then that means we are looking at a let declaration without a terminating semicolon
-                                // OH NO!!
-                                return true;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    // or if any of those conditions fail, we're all good
-    false
-}
-
 /// Formats input code with boilerplate base contents
-fn format(mut input: String) -> String {
-    let tokens = input.parse::<TokenStream>().unwrap().into_iter().collect();
-    if requires_extra_semicolon(tokens) {
-        input += ";"
-    }
-
-    BASE_CONTENTS.replace("// user input", &input)
+fn format(input: &str) -> String {
+    BASE_CONTENTS.replace("// user input", input)
 }
 
 /// Returns success
 fn run(input: String, code_path: &PathBuf, exe_path: &PathBuf, modified: bool) -> bool {
     // write file
-    let formatted_file_contents = format(input);
+    let formatted_file_contents = format(&input);
     std::fs::write(code_path, formatted_file_contents).unwrap();
 
     // compile new code (only if code has been modified, or no exe exists)
@@ -145,7 +109,9 @@ fn main() {
         stdin().read_line(&mut buf).unwrap();
         let line_input = buf.trim();
 
-        if is_input_incomplete(&buf) {
+        let parse_result = parse_input(&buf);
+
+        if let ParseResult::Incomplete = parse_result {
             print!("  ");
             continue;
         }
@@ -178,6 +144,10 @@ fn main() {
             modified_file_contents += line_input;
             if line_input.ends_with(";") {
                 modified_file_contents += "\n";
+            }
+
+            if let ParseResult::RequiresSemicolon = parse_result {
+                modified_file_contents += ";"
             }
 
             let success = run(
