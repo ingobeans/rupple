@@ -11,25 +11,16 @@ use crossterm::{
 use proc_macro2::{TokenStream, TokenTree};
 use rand::{rng, Rng};
 
+use crate::is_incomplete::is_input_incomplete;
+
+mod is_incomplete;
+
 const BASE_CONTENTS: &str = include_str!("base.rs");
 
 const HELP: &str = "/help - prints help
 /clear - clears repl
 /exit - quits repl
 /debug - prints stored repl data";
-
-/// Whether a user's input is incomplete or not.
-/// For instance, true if the user opens a closure that isn't closed,
-/// or declares a string without terminating quote.
-fn is_input_incomplete(input: &str) -> bool {
-    // yes this is not a proper way to do this but it works most of the time, okay!?
-    // basically we just check if the input is parseable as a TokenStream
-    // this happens to fail on, say, an unterminated closure.
-    // although it does also have a few edge cases where it also fails,
-    // such as randomly typing a closing bracket, or typing a char literal, but with multiple chars, like: `let a = 'abc';`
-    // but for now i'll leave this as is, because it does work, and false positives are rare, and always the user's fault in some way
-    input.parse::<TokenStream>().is_err()
-}
 
 /// Function that checks for the specific case where input ends with a let declaration without a terminating semicolon
 fn requires_extra_semicolon(mut tokens: Vec<TokenTree>) -> bool {
