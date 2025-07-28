@@ -4,7 +4,7 @@
 rupple is a repl for rust! i made it because [evcxr](https://github.com/evcxr/evcxr), the only other rust repl i know about, is really slow (at least on my machine), requires rust nightly, has a shitload of dependencies, and simply refuses to run on one of my computers.
 
 rupple features:
-* run rust code in repl environment with output
+* run rust code in repl environment
 * roughly 5x faster than evcxr on my machine
 * no nightly required
 * crossplatform
