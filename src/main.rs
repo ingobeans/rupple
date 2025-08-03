@@ -13,6 +13,8 @@ use rand::{rng, Rng};
 use crate::parser::{parse_input, ParseResult};
 
 mod parser;
+#[cfg(test)]
+mod tests;
 
 const BASE_CONTENTS: &str = include_str!("base.rs");
 
@@ -31,7 +33,6 @@ fn run(input: String, code_path: &PathBuf, exe_path: &PathBuf, modified: bool) -
     // write file
     let formatted_file_contents = format(&input);
     std::fs::write(code_path, formatted_file_contents).unwrap();
-
     // compile new code (only if code has been modified, or no exe exists)
     if modified || !std::fs::exists(exe_path).unwrap_or(false) {
         // compile

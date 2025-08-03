@@ -14,6 +14,6 @@ install: `cargo install --git https://github.com/ingobeans/rupple.git`
 
 ## todo
 
-* add tests (i dont trust that i have covered all edge cases with my custom rust parser)
+* add more tests (i dont trust that i have covered all edge cases with my custom rust parser)
 * syntax highlighting as you type
 * ability to move cursor up and down when typing multiple lines

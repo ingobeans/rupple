@@ -1,3 +1,4 @@
+#[derive(Debug, PartialEq)]
 pub enum ParseResult {
     /// No problems found
     AllGood,
@@ -56,9 +57,16 @@ pub fn parse_input(input: &str) -> ParseResult {
             '}' => {
                 opened_closures = opened_closures.saturating_sub(1);
             }
-            ' ' => {
-                keywords.push(String::new());
+            ' ' | '=' => {
+                if !keywords.last().unwrap().is_empty() {
+                    keywords.push(String::new());
+                }
+                if char != ' ' {
+                    keywords.last_mut().unwrap().push(char);
+                    keywords.push(String::new());
+                }
             }
+
             _ => {
                 keywords.last_mut().unwrap().push(char);
             }
